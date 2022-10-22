@@ -6,11 +6,12 @@
 //
 
 import UIKit
+import CoreData
 
-class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSource {
+class ViewController: UIViewController {
     
     @IBOutlet weak var tableView: UITableView!
-
+    
     var alertController = UIAlertController()
     
     var data = [String]()
@@ -22,57 +23,25 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         tableView.dataSource = self
     }
     
-    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return data.count
-    }
     
-    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "cell", for: indexPath)
-        cell.textLabel?.text = data[indexPath.row]
-        return cell
-    }
-
+    
     @IBAction func removeBarButtonTapped(_ sender: UIBarButtonItem) {
-       presentAlert(title: "Alert!",
-                    message: "Are you sure remove all items?",
-                    cancelButtonTitle: "Cancel",
-                    defaultButtonTitle: "Remove") { _ in
-                        self.data.removeAll()
-                        self.tableView.reloadData()
-                    }
+        presentAlert(title: "Alert!",
+                     message: "Are you sure remove all items?",
+                     cancelButtonTitle: "Cancel",
+                     defaultButtonTitle: "Remove") { _ in
+            self.data.removeAll()
+            self.tableView.reloadData()
+        }
         
         
     }
     
     @IBAction func addBarButtonTapped(_ sender: UIBarButtonItem) {
-       presentAddAlert()
+        presentAddAlert()
     }
     
     func presentAddAlert() {
-//        //create alert controller
-//        let alertController = UIAlertController(title: "Add new element", message: nil, preferredStyle: .alert)
-//
-//        //create add button
-//        let defaultButton = UIAlertAction(title: "Add", style: .default) { _ in
-//            //to eliminate the empty element conducted fi control
-//            let text = alertController.textFields?.first?.text
-//            if text != "" {
-//                self.data.append((text)!)
-//                self.tableView.reloadData()
-//            } else {
-//                self.presentWarningAlert()
-//            }
-//        }
-//        //create cancel button
-//        let cancelButton = UIAlertAction(title: "Cancel", style: .cancel)
-//
-//        //add textField
-//        alertController.addTextField()
-//
-//        alertController.addAction(defaultButton)
-//        alertController.addAction(cancelButton)
-//        present(alertController, animated: true)
-        
         presentAlert(title: "Add new element",
                      message: nil,
                      cancelButtonTitle: "Canccel",
@@ -81,7 +50,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                      defaultButtonHandler: {_ in
             let text = self.alertController.textFields?.first?.text
             if text != "" {
-                self.data.append((text)!)
+                //self.data.append((text)!)
                 self.tableView.reloadData()
             } else {
                 self.presentWarningAlert()
@@ -103,18 +72,18 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                       isTextFieldAvailable: Bool = false,
                       defaultButtonTitle: String? = nil,
                       defaultButtonHandler: ((UIAlertAction) -> Void)? = nil
-                      ) {
+    ) {
         
         alertController = UIAlertController(title: title,
-                                                message: message,
-                                                preferredStyle: preferedStyle)
+                                            message: message,
+                                            preferredStyle: preferedStyle)
         if defaultButtonTitle != nil {
             let defaultButton = UIAlertAction(title: defaultButtonTitle,
                                               style: .default,
                                               handler: defaultButtonHandler)
             alertController.addAction(defaultButton)
         }
-       
+        
         
         let cancelButton = UIAlertAction(title: cancelButtonTitle,
                                          style: .cancel)
@@ -129,3 +98,50 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     }
 }
 
+extension ViewController: UITableViewDelegate, UITableViewDataSource {
+    
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        return data.count
+    }
+    
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let cell = tableView.dequeueReusableCell(withIdentifier: "cell", for: indexPath)
+        cell.textLabel?.text = data[indexPath.row]
+        return cell
+    }
+    
+    func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
+        let deleteAction = UIContextualAction(style: .normal,
+                                              title: "Delete") { _, _, _ in
+            self.data.remove(at: indexPath.row)
+            tableView.reloadData()
+        }
+        deleteAction.backgroundColor = .systemRed
+        
+        let editAction = UIContextualAction(style: .destructive,
+                                              title: "Edit") { _, _, _ in
+            self.presentAlert(title: "Reduct the element",
+                              message: nil,
+                              cancelButtonTitle: "Canccel",
+                              isTextFieldAvailable: true,
+                              defaultButtonTitle: "Edit",
+                              defaultButtonHandler: {_ in
+                let text = self.alertController.textFields?.first?.text
+                if text != "" {
+                    self.data[indexPath.row] = text!
+                    self.tableView.reloadData()
+                } else {
+                    self.presentWarningAlert()
+                }
+            }
+            )
+        }
+        
+        editAction.backgroundColor = .systemYellow
+        
+        
+        let config = UISwipeActionsConfiguration(actions: [deleteAction, editAction])
+        
+        return config
+    }
+}
